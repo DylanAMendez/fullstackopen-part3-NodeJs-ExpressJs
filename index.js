@@ -1,103 +1,108 @@
-const express = require('express');
+const express = require('express')
 
-const app = express();
+const app = express()
 
-//? acceder a los datos fácilmente, con json-parser de express
 app.use(express.json())
 
-let notes = [
+let persons = [
   {
     id: 1,
-    content: 'HTML is easy',
-    date: '2019-05-30T17:30:31.098Z',
-    important: true,
+    name: "Arthur Hellas",
+    number: "040-123456"
   },
   {
     id: 2,
-    content: 'Browser can execute only Javascript',
-    date: '2019-05-30T18:39:34.091Z',
-    important: false,
+    name: "Ada Lovelace",
+    number: "39-44-5323523"
   },
   {
     id: 3,
-    content: 'GET and POST are the most important methods of HTTP protocol',
-    date: '2019-05-30T19:20:14.298Z',
-    important: true,
+    name: "Dan Abraham",
+    number: "12-43-234345"
   },
-];
-
-//* enviar texto html
-app
-  .get('/', (request, response) =>
   {
-    response.send('<h1>Hello World</h1>');
-  });
+    id: 4,
+    name: "Mary Pop",
+    number: "39-23-6423122"
+  },
+]
 
-//* obtener todos valores dentro de notes[]
+//* OBTENER ALL PERSONS
 app
-  .get('/api/notes', (request, response) =>
+  .get('/api/persons', (request, response) =>
   {
-    response.json(notes);
-  });
+    response.json(persons)
+  })
 
-//* obtener id especifico
+//* OBTENER INFO
 app
-  .get('/api/notes/:id', (request, response) =>
+  .get('/api/info', (request, response) =>
   {
-    const id = Number(request.params.id);
-    console.log(id);
+    const entradasAgenda = persons.length
+    const dateNow = new Date()
+    response.send(`<p>Phonebook has info for ${entradasAgenda} people</p> <p>${dateNow}</p>`)
+  })
 
-    const note = notes.find(note => note.id === id)
+//* OBTENER con ID especifico
+app
+  .get('/api/persons/:id', (request, response) =>
+  {
+    const id = Number(request.params.id)
 
-    if (note) {
-      response.json(note);
+    const person = persons.find(p => p.id === id) //? retorna el objeto entero
+
+    if (person) {
+      response.json(person)
     }
     else {
-      response.status(404).end();
+      response.status(404).end()
     }
 
-    console.log(note);
+    console.log(person);
+  })
 
-  });
 
-//* Eliminar recursos con id especifico
+//* eliminar con ID especifico
 app
-  .delete('/api/notes/:id', (request, response) =>
+  .delete('/api/persons/:id', (request, response) =>
   {
-    const id = Number(request.params.id);
-
-    notes = notes.filter(note => note.id !== id)
-
+    const id = Number(request.params.id)
+    persons = persons.filter(p => p.id !== id)
     response.status(204).end()
   })
 
-//* agregar nuevas notas al servidor
+//? función GENERAR ID AUTO
+const generateId = () =>
+{
+  const maxId = persons.length > 0
+    ? Math.max(...persons.map(n => n.id))
+    : 0
+  return maxId + 1
+}
+
+
+//* ADD new PERSON
 app
-  .post('/api/notes', (request, response) =>
+  .post('/api/persons', (request, response) =>
   {
-    const note = request.body
-    console.log(note);
+    const body = request.body
 
-    response.json(note)
-  })
-
-
-//* finalizar el manejo de la solicitud
-app
-  .post('/api/notes', (request, response) =>
-  {
-    const body = response.body
+    const nameExists = persons.some(person => person.content === body.content)
 
     if (!body.content) {
-      return response
-        .status(400)
-        .json(
-          {
-            error: 'content missing'
-          })
+      return response.status(400).json({
+        error: 'content missing'
+      })
     }
 
-    const note =
+    if (nameExists) {
+      return response.status(400).json({
+        error: 'name must be unique'
+      })
+    }
+
+
+    const person =
     {
       content: body.content,
       important: body.important || false,
@@ -105,26 +110,17 @@ app
       id: generateId(),
     }
 
-    notes = notes.concat(note)
+    persons = persons.concat(person)
 
-    response.json(note)
+    response.json(person)
+
+
   })
 
-
-//* Mejoremos la aplicación definiendo que la propiedad content no puede estar vacía. 
-//* Las propiedades important y date recibirán valores predeterminados. las demás se descartan
-const generateId = () => 
-{
-  const maxId = notes.length > 0
-    ? Math.max(...notes.map(n => n.id))
-    : 0
-  return maxId + 1
-}
-
-
-const PORT = 3001;
+//? puerto
+const PORT = 3001
 
 app.listen(PORT, () =>
 {
-  console.log(`Server running on port ${PORT}`);
-});
+  console.log(`Server is running on port ${PORT}`);
+})
