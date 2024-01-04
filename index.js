@@ -1,8 +1,29 @@
 const express = require('express')
+const morgan = require('morgan')
 
 const app = express()
 
 app.use(express.json())
+
+morgan.token('all-methods', (req, res) =>
+{
+  if (req.method === 'GET' || req.method === 'POST' || req.method === 'DELETE') {
+    return JSON.stringify(req.query);
+  }
+  return '';
+});
+
+morgan.token('params-data', (req, res) =>
+{
+  if (req.method === 'GET') {
+    return JSON.stringify(req.params);
+  }
+  return '';
+});
+
+
+
+app.use(morgan(':method :url :status :response-time ms - :res[content-length] :all-methods'))
 
 let persons = [
   {
@@ -116,6 +137,13 @@ app
 
 
   })
+
+const unknownEndpoint = (request, response) =>
+{
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
 
 //? puerto
 const PORT = 3001
